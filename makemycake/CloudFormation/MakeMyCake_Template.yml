@@ -1,0 +1,247 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: MakeMyCakeApp MakeMyCakeApp CloudFormation Template
+
+Metadata:
+  License: >-
+    Any code, applications, scripts, templates, proofs of concept, documentation
+    and other items provided by AWS under this SOW are "AWS Content," as defined
+    in the Agreement, and are provided for illustration purposes only. All such
+    AWS Content is provided solely at the option of AWS, and is subject to the
+    terms of the Addendum and the Agreement. Customer is solely responsible for
+    using, deploying, testing, and supporting any code and applications provided
+    by AWS under this SOW.
+
+Parameters:
+  VPCId:
+    Type: String
+    Default: vpc-f8616c9d
+
+  SSHAllowFromCIDR:
+    Type: String
+    Default: 0.0.0.0/0
+
+  # TODO: replace it with  region-2-AMI with a list of pre-defined images
+  MakeMyCakeAppEC2ImageId:
+    Type: String
+    Default: ami-061e7ebbc234015fe
+
+  MakeMyCakeAppEC2InstanceType:
+    Type: String
+    Default: t2.micro
+
+  MakeMyCakeAppASGDesiredCapacity:
+    Type: String
+    Default: 2
+
+  MakeMyCakeAppASGMaxSize:
+    Type: String
+    Default: 10
+
+  MakeMyCakeAppASGMinSize:
+    Type: String
+    Default: 1
+
+  MakeMyCakeAppEC2SubnetIds:
+    Type: String
+    Default: subnet-53273736,subnet-8ae6a4d3
+
+  EC2KeyPair:
+    Type: String
+    Default: sarmapalli
+
+Resources:
+  MakeMyCakeAppEC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: MakeMyCakeAppEC2InstanceRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+      Policies:
+        -
+          PolicyName: MakeMyCakeAppEC2InstancePermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - # TODO: Tighten up permissions
+                Sid: AllowServiceDiscovery
+                Effect: Allow
+                Action:
+                  - servicediscovery:*
+                Resource: '*'
+              - # TODO: Tighten up permissions
+                Sid: AllowRoute53Changes
+                Effect: Allow
+                Action:
+                  - route53:*
+                  - route53domains:*
+                Resource: '*'
+              - # TODO: Tighten up permissions
+                Sid: EC2Permissions
+                Effect: Allow
+                Action:
+                  - ec2:DescribeVpcs
+                  - ec2:DescribeRegions
+                Resource: '*'
+  MakeMyCakeAppEC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref MakeMyCakeAppEC2InstanceRole
+      InstanceProfileName: MakeMyCakeAppEC2InstanceProfile
+
+  MakeMyCakeAppEC2SG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: MakeMyCakeApp Linux EC2 Security Group
+      GroupName: MakeMyCakeAppEC2SG
+      SecurityGroupIngress:
+      - Description: SSH from CIDR
+        FromPort: 22
+        ToPort: 22
+        IpProtocol: TCP
+        CidrIp: !Ref SSHAllowFromCIDR
+      - Description: http from CIDR
+        FromPort: 5000
+        ToPort: 5000
+        IpProtocol: TCP
+        CidrIp: !Ref SSHAllowFromCIDR
+      Tags:
+      - Key: Name
+        Value: MakeMyCakeAppEC2SG
+      VpcId: !Ref VPCId
+
+  MakeMyCakeAppLT:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: MakeMyCakeAppWeb
+      LaunchTemplateData:
+        TagSpecifications:
+        -
+          ResourceType: instance
+          Tags:
+            -
+              Key: Name
+              Value: MakeMyCakeApp Amazon Linux
+        -
+          ResourceType: volume
+          Tags:
+            -
+              Key: Name
+              Value: MakeMyCakeApp Volume
+        InstanceInitiatedShutdownBehavior: stop
+        IamInstanceProfile:
+          Name: !Ref MakeMyCakeAppEC2InstanceProfile
+        SecurityGroupIds:
+          - !Ref MakeMyCakeAppEC2SG
+        ImageId: !Ref MakeMyCakeAppEC2ImageId
+        InstanceType: !Ref MakeMyCakeAppEC2InstanceType
+        Monitoring:
+          Enabled: true
+        KeyName: !Ref EC2KeyPair
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            set -x
+            set -e
+            yum update -y
+
+            echo "=== CF === Configure CodeDeploy"
+            yum install -y ruby
+            mkdir /tmp/AWSCodeDeployAgent
+            cd /tmp/AWSCodeDeployAgent
+            wget --no-verbose https://aws-codedeploy-${AWS::Region}.s3.amazonaws.com/latest/install
+            chmod +x ./install
+            ./install auto
+            service codedeploy-agent start
+            sleep 10
+            service codedeploy-agent status
+
+  MakeMyCakeAppASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: 1
+        MinInstancesInService: 1
+        PauseTime: PT1M
+        SuspendProcesses:
+          - HealthCheck
+          - ReplaceUnhealthy
+          - AZRebalance
+          - AlarmNotification
+          - ScheduledActions
+        WaitOnResourceSignals: false
+    Properties:
+      DesiredCapacity: !Ref MakeMyCakeAppASGDesiredCapacity
+      HealthCheckGracePeriod: 300
+      HealthCheckType: EC2
+      LaunchTemplate:
+        LaunchTemplateId: !Ref MakeMyCakeAppLT
+        Version: !GetAtt MakeMyCakeAppLT.LatestVersionNumber
+      VPCZoneIdentifier: !Split [ ",", !Ref MakeMyCakeAppEC2SubnetIds ]
+      MaxSize: !Ref MakeMyCakeAppASGMaxSize
+      MetricsCollection:
+        -
+          Granularity: 1Minute
+      MinSize: !Ref MakeMyCakeAppASGMinSize
+      Tags:
+        -
+          Key: Name
+          Value: MakeMyCakeApp Amazon Linux
+          PropagateAtLaunch: true
+
+  MakeMyCakeAppCodeDeploy:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ApplicationName: MakeMyCakeAppWeb
+      ComputePlatform: Server
+
+  MakeMyCakeAppCodeDeployASGDeploymentGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties:
+      DeploymentGroupName: MakeMyCakeAppWebASG
+      ApplicationName: !Ref MakeMyCakeAppCodeDeploy
+      AutoRollbackConfiguration:
+        Enabled: true
+        Events:
+          - DEPLOYMENT_FAILURE
+      AutoScalingGroups:
+        - !Ref MakeMyCakeAppASG
+      Ec2TagFilters:
+        -
+          Key: aws:cloudformation:stack-id
+          Type: KEY_AND_VALUE
+          Value: !Sub ${AWS::StackId}
+      DeploymentConfigName: CodeDeployDefault.OneAtATime
+      DeploymentStyle:
+        DeploymentOption: WITHOUT_TRAFFIC_CONTROL
+        DeploymentType: IN_PLACE
+      ServiceRoleArn: !GetAtt AWSCodeDeployServiceRole.Arn
+
+  AWSCodeDeployServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AWSCodeDeployServiceRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        -
+          Effect: Allow
+          Principal:
+            Service:
+              - codedeploy.amazonaws.com
+          Action:
+            - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole
+        - arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForLambda

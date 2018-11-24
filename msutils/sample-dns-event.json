@@ -1,0 +1,9 @@
+{
+  "Protocol": "DNS",
+  "NamespaceName": "cloudmaptestdns13",
+  "ServiceName": "ec2instancetest",
+  "microservicename": "caketypes",
+  "instanceId": "4.5.6.7",
+  "port": "5000",
+  "vpcId": "vpc-f8616c9d"
+}

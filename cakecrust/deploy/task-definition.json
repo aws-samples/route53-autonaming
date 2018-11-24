@@ -1,0 +1,24 @@
+{
+  "containerDefinitions": [
+    {
+      "name": "cakecrust",
+      "image": "<your container flask app repository URL>",
+      "memory": "256",
+      "cpu": "256",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": "5000",
+          "protocol": "tcp"
+        }
+      ],
+      "links": [
+        "app"
+      ]
+    }
+  ],
+  "volumes": [],
+  "networkMode": "bridge",
+  "placementConstraints": [],
+  "family": "my-container-microservice"
+}

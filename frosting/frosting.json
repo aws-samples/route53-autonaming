@@ -1,0 +1,257 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Frosting Micro Service",
+  "Outputs": {
+    "frostingurl": {
+      "Description": "Root URL of the frosting API",
+      "Value": {"Fn::Join": ["", ["https://", {"Ref": "apifrosting"}, ".execute-api.", {"Ref": "AWS::Region"}, ".amazonaws.com"]]}
+    }
+  },
+  "Resources": {
+    "policyfrostinglambdabasicexecution": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "ManagedPolicyName": "frosting-lambda-basic-execution",
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": "logs:CreateLogGroup",
+              "Resource": {
+                "Fn::Join": [
+                  ":",
+                  [
+                    "arn",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    "logs",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    "*"
+                  ]
+                ]
+              }
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+              ],
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    ":",
+                    [
+                      "arn",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      "logs",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      "log-group",
+                      "/aws/lambda/*",
+                      "*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "rolefrosting": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "MaxSessionDuration": 3600,
+        "Path": "/service-role/",
+        "ManagedPolicyArns": [
+          {
+            "Ref": "policyfrostinglambdabasicexecution"
+          }
+        ],
+        "RoleName": "lambda-frosting"
+      }
+    },
+    "lambdafrosting": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "ZipFile": {
+            "Fn::Join": [
+              "\n",
+              [
+                "def lambda_handler(event, context):",
+                "    del event",
+                "    del context",
+                "    return_value = {'FrostingTypes': ['Vanilla', 'Chocolate', 'Strawberry', 'Cream Cheese']}",
+                "    return return_value"
+              ]
+            ]
+          }
+        },
+        "Description": "lambda to return available frosting types",
+        "FunctionName": "frosting",
+        "Handler": "index.lambda_handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "rolefrosting",
+            "Arn"
+          ]
+        },
+        "Runtime": "python3.6",
+        "Timeout": 300,
+        "MemorySize": 128,
+        "TracingConfig": {
+          "Mode": "PassThrough"
+        }
+      }
+    },
+    "frostinglambdapermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:invokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "lambdafrosting",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:aws:execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "apifrosting"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
+    },
+    "apifrosting": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Name": "Frosting"
+      }
+    },
+    "resourcefrosting": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "apifrosting"
+        },
+        "ParentId": {
+          "Fn::GetAtt": [
+            "apifrosting",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "frosting"
+      }
+    },
+    "methodfrosting": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "apifrosting"
+        },
+        "ResourceId": {
+          "Ref": "resourcefrosting"
+        },
+        "HttpMethod": "GET",
+        "AuthorizationType": "NONE",
+        "OperationName": "ListFrostings",
+        "Integration": {
+          "ContentHandling": "CONVERT_TO_TEXT",
+          "IntegrationHttpMethod": "POST",
+          "IntegrationResponses": [
+            {
+              "ContentHandling": "CONVERT_TO_TEXT",
+              "ResponseTemplates": {
+                "application/json": "$input.body"
+              },
+              "StatusCode": 200
+            }
+          ],
+          "PassthroughBehavior": "WHEN_NO_MATCH",
+          "Type": "AWS",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:aws:apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "lambdafrosting",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": [
+          {
+            "ResponseModels": {
+              "application/json": "Empty"
+            },
+            "StatusCode": 200
+          }
+        ]
+      }
+    },
+    "deploymentfrosting": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "apifrosting"
+        },
+        "StageName": "v1"
+      },
+      "DependsOn": [
+        "methodfrosting"
+      ]
+    }
+  }
+}

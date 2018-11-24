@@ -1,0 +1,58 @@
+# Any code, applications, scripts, templates, proofs of concept, documentation
+# and other items provided by AWS under this SOW are "AWS Content," as defined
+# in the Agreement, and are provided for illustration purposes only. All such
+# AWS Content is provided solely at the option of AWS, and is subject to the
+# terms of the Addendum and the Agreement. Customer is solely responsible for
+# using, deploying, testing, and supporting any code and applications provided
+# by AWS under this SOW.
+
+---
+version: 0.0
+os: linux
+files:
+  -
+    # copy main program
+    source: makecakeapp.py
+    destination: /apps/flask/makemycakeapp/
+  -
+    # copy route53 autonaming script
+    source: self-register.py
+    destination: /apps/flask/makemycakeapp/
+  -
+    # copy metadata file
+    source: mc-metadata.json
+    destination: /apps/flask/makemycakeapp/
+  -
+    # copy application startup/shutdown scripts
+    source: bin
+    destination: /apps/flask/makemycakeapp/bin
+hooks:
+  ApplicationStop:
+    - location: hooks/deregister_from_servicediscovery.sh
+      timeout: 120
+      runas: root
+    - location: hooks/stop_app.sh
+      timeout: 10
+      runas: root
+  BeforeInstall:
+    - location: hooks/create_flask_user.sh
+      timeout: 10
+      runas: root
+    - location: hooks/install_dependencies.sh
+      timeout: 60
+      runas: root
+  AfterInstall:
+    - location: hooks/set_app_permissions.sh
+      timeout: 10
+      runas: root
+  ApplicationStart:
+    - location: hooks/start_app.sh
+      timeout: 10
+      runas: root
+  ValidateService:
+    - location: hooks/validate_service.sh
+      timeout: 15
+      runas: root
+    - location: hooks/register_with_servicediscovery.sh
+      timeout: 300
+      runas: root

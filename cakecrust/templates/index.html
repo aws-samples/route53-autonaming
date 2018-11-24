@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<style>
+body {
+    background: url({{ url_for('static', filename='dust_scratches.png') }}) repeat 0 0;
+}
+</style>
+	<title>Service Discovery</title>
+</head>
+<body>
+	<div class="container">
+		<div class="row justify-content-md-center">
+			<h1 class="display">Amazon route53 service discovery with autonaming</h1>
+		</div>
+		<div class="row justify-content-md-center">
+			<div class="col">
+				<p>This is a short demo of service discovery with R53 autonaming API using HTTP and DNS protocols</p>
+				<p>Let's imagine a bakery with 3 microservices hosted on various choices of compute stack - like API Gateway & Lambda, Containers on ECS or EKS, and traditional EC2 instance. We can have all of these services in their own autoscaling groups so they respond to changing loads.</p>
+				<p><b>Containers on ECS: </b>As our tasks scale up and down in response to each compute stack uses its own mechanism for scaling. For example, the load on ECS is able to use <a href="https://aws.amazon.com/route53/">Amazon Route 53</a> to add and remove DNS records for each task.</p>
+				<p><font color="blue">Example microservice: Cake crusts</font></p>
+
+				<p><b>Serverless using APIGateway and lambda: </b> API gateway endpoint dynamically launches lambdas in response to the requests it receives. In our example, frosting microservice runs on lambda; The queries to Route53 are using service discovery over HTTP protocol.</p>
+				<p><font color="blue">Example microservice: Frosting</font></p>
+
+				<p><b>EC2 Compute: </b> EC2 compute endpoint is used by "database as a service" where all our available choices are stored as a static list in table. In a real world example, you would have these values served by database as users make requests for data. </p>
+				<p><font color="blue">Example microservice: Database as a service</font></p>
+
+				<p>You can find more details on service discovery in the <a href="https://aws.amazon.com/blogs/aws/amazon-r53-autonaming-service-discovery/">blog post</a> and in the <a href="https://github.com/awslabs/r53-service-discovery-demo">code</a>.</p>
+			</div>
+		</div>
+		<hr>
+		<div class="row justify-content-md-center">
+			<div class="col">
+				<p>These are the services I found, if you refresh the page the IPs or URLS of the workers should change:</p>
+				<ul>
+					<li>Services details:</li><br>
+				{% for service in services %}
+					{% if service.text %}
+						<li>endpoint: {{service.text|safe}}</li><br>
+					{% endif%}
+					{% if service.InstanceName %}
+						<li>instance name:{{service.InstanceName|safe}}</li><br>
+					{% endif%}
+					
+				{% endfor %}
+				</ul>
+			<img src="{{url_for('static', filename='R53-Autonaming.png')}}" class="img-fluid" alt="architecture diagram">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

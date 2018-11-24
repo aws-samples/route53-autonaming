@@ -1,0 +1,38 @@
+[
+  {
+    "ParameterKey": "VPCId",
+    "ParameterValue": "vpc-f8616c9d"
+  },
+  {
+    "ParameterKey": "MakeMyCakeAppEC2SubnetIds",
+    "ParameterValue": "subnet-53273736,subnet-8ae6a4d3"
+  },
+  {
+    "ParameterKey": "EC2KeyPair",
+    "ParameterValue": "my-ec2-key-pair"
+  },
+  {
+    "ParameterKey": "MakeMyCakeAppEC2ImageId",
+    "ParameterValue": "ami-061e7ebbc234015fe"
+  },
+  {
+    "ParameterKey": "SSHAllowFromCIDR",
+    "ParameterValue": "0.0.0.0/0"
+  },
+  {
+    "ParameterKey": "MakeMyCakeAppEC2InstanceType",
+    "ParameterValue": "t2.micro"
+  },
+  {
+    "ParameterKey": "MakeMyCakeAppASGMinSize",
+    "ParameterValue": "1"
+  },
+  {
+    "ParameterKey": "MakeMyCakeAppASGMaxSize",
+    "ParameterValue": "10"
+  },
+  {
+    "ParameterKey": "MakeMyCakeAppASGDesiredCapacity",
+    "ParameterValue": "2"
+  }
+]

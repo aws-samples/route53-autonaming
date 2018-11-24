@@ -1,0 +1,5 @@
+{
+    "NamespaceName" : "makecakeshop",
+    "ServiceName" : "caketypes",
+    "Port": "5000"
+}

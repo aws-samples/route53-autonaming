@@ -1,0 +1,20 @@
+{
+    "cluster": "<your ecs clustername>",
+    "serviceName": "ecs-example-service-discovery",
+    "taskDefinition": "<your task definition version>",
+    "serviceRegistries": [
+       {
+          "registryArn": "arn:aws:servicediscovery:region:aws_account_id:service/srv-utcrh6wavdkggqtk"
+       }
+    ],
+    "launchType": "FARGATE",
+    "platformVersion": "1.1.0",
+    "networkConfiguration": {
+       "awsvpcConfiguration": {
+          "assignPublicIp": "ENABLED",
+          "securityGroups": [ "sg-abcd1234" ],
+          "subnets": [ "subnet-abcd1234" ]
+       }
+    },
+    "desiredCount": 1
+}
