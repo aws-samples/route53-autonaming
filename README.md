@@ -47,16 +47,4 @@ You can register the HTTP Namespace by running lambda using
 The sample code provided for the container microservice, has the calls that demonstrate how to lookup/discover the data registered by other microservices
 
 
-Sample applications:
-Sarma - EC2 - Pending flask app running that returns a bunch of values
-Sarma - EC2 - Call to R53 register-ms.py lambda ARN (Pass arguments: Service name, IP address, and port that app is listening)
-Aaron - EC2 - Call to R53 de-register-ms.py lambda ARN
-
-DONE: Madhuri - ECS - Update the webpage to include call to R53 discovery instances API and display details. (EC2)
-DONE: Madhuri - ECS - Update the webpage to include call to R53 discovery instances API and display details. (API Gateway)
-
-DONE: Madhuri - Test register-ms.py
-Aaron - Test deregister-ms.py
-
-Future open issues:
-- Improvement for using ASG hooks.
+### Future open issues:
