@@ -6,7 +6,7 @@ The Lambda function is written in Python 3.6. The code is included as
 `frosting_ms.py` but is packaged/deployed as inline text in the CloudFormation 
 template `frosting.json` 
 ### Creating the CloudFormation stack
-The stack can be created with a simple awscli command:
+The stack can be created with an awscli command:
 ```bash
 aws cloudformation create-stack \
     --capabilities CAPABILITY_NAMED_IAM \
@@ -25,14 +25,14 @@ aws --output text cloudformation describe-stacks \
 
 #### Invoke Register Lambda Function
 ```bash
-aws --profile mperi lambda invoke \
+aws lambda invoke \
     --fucntion-name register-microservice \
     --payload "{
     \"NamespaceName\": \"frosting\",
     \"ServiceName\": \"frosting\",
     \"Protocol\": \"HTTP\",
     \"port\": \"80\",
-    \"apiGatewayUrl\": \"https://acwpv3segi.execute-api.us-west-2.amazonaws.com\" \
+    \"apiGatewayUrl\": \"[api gateway url from previous command]\" \
     /tmp/lambda_output.txt
 }"
 ```
