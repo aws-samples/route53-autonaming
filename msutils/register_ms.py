@@ -6,8 +6,6 @@ import time
 import boto3
 
 CLIENT = boto3.client('servicediscovery')
-CLIENT._endpoint.host = 'https://servicediscovery.us-west-2.amazonaws.com'  # pylint: disable=W0212
-CLIENT._endpoint.verify = False  # pylint: disable=W0212
 
 
 def list_namespaces(namespace_name):
