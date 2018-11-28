@@ -21,11 +21,11 @@ Script to register/de-register this application (using IP/port) using Route 53 s
 
 1. **VPCId**
 
-  VPC in which SecurityGroup, AutoscalingGroup will be created
+   VPC in which SecurityGroup, AutoscalingGroup will be created
 
 1. **MakeMyCakeAppEC2SubnetIds**
 
-    SubnetIds in which EC2 instances will be created (must be in the same VPC as above)
+   SubnetIds in which EC2 instances will be created (must be in the same VPC as above)
 
 1. **EC2KeyPair**
 
@@ -37,23 +37,23 @@ Script to register/de-register this application (using IP/port) using Route 53 s
 
 1. **SSHAllowFromCIDR**
 
-  SSH Access to EC2 instances will be allowed from this IP Address range
+   SSH Access to EC2 instances will be allowed from this IP Address range
 
 1. **MakeMyCakeAppEC2InstanceType**
 
-  EC2 InstanceType. Default of t2.micro will suffice for this demo
+   EC2 InstanceType. Default of t2.micro will suffice for this demo
 
 1. **MakeMyCakeAppASGMinSize**
 
-  Minimum number of instances in Autoscaling group
+   Minimum number of instances in Autoscaling group
 
 1. **MakeMyCakeAppASGMaxSize**
 
-  Maximum number of instances in Autoscaling group
+   Maximum number of instances in Autoscaling group
 
 1. **MakeMyCakeAppASGDesiredCapacity**
 
-  Default number of instances in Autoscaling group. Set it to atleast the number of SubnetIds.
+   Default number of instances in Autoscaling group. Set it to atleast the number of SubnetIds.
 
 
 
